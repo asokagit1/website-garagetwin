@@ -6,6 +6,7 @@ export default function KatalogMotor({ auth, motorcycles }) {
     const [sortBy, setSortBy] = useState('Terbaru');
     const [selectedMotor, setSelectedMotor] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Default mock data to guarantee the page displays correctly if database is empty
     const defaultMotorcycles = [
@@ -99,8 +100,8 @@ export default function KatalogMotor({ auth, motorcycles }) {
                             GARAGETWIN
                         </Link>
 
-                        {/* Navigation Links */}
-                        <nav className="flex items-center space-x-8 text-sm font-medium">
+                        {/* Navigation Links (hidden on mobile) */}
+                        <nav className="hidden md:flex items-center space-x-8 text-sm font-medium">
                             <Link 
                                 href="/" 
                                 className="py-2 text-gray-400 hover:text-white transition duration-300"
@@ -116,8 +117,8 @@ export default function KatalogMotor({ auth, motorcycles }) {
                             </Link>
                         </nav>
 
-                        {/* Right Actions */}
-                        <div className="flex items-center space-x-4">
+                        {/* Right Actions (hidden on mobile) */}
+                        <div className="hidden md:flex items-center space-x-4">
                             {auth?.user ? (
                                 <div className="flex items-center space-x-4">
                                     <Link 
@@ -144,7 +145,71 @@ export default function KatalogMotor({ auth, motorcycles }) {
                                 </Link>
                             )}
                         </div>
+
+                        {/* Mobile Menu Button (visible on mobile only) */}
+                        <button 
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="md:hidden text-gray-400 hover:text-white focus:outline-none p-2"
+                            aria-label="Toggle Menu"
+                        >
+                            {isMobileMenuOpen ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            )}
+                        </button>
                     </div>
+
+                    {/* Mobile Menu Drawer/Dropdown (visible on mobile only) */}
+                    {isMobileMenuOpen && (
+                        <div className="md:hidden border-t border-white/5 bg-[#0a0b0d]/95 backdrop-blur-md px-6 py-4 space-y-4">
+                            <nav className="flex flex-col space-y-3">
+                                <Link 
+                                    href="/" 
+                                    className="text-sm font-bold tracking-wider uppercase text-gray-400 hover:text-white transition py-2"
+                                >
+                                    Beranda
+                                </Link>
+                                <Link 
+                                    href="/katalog" 
+                                    className="text-sm font-bold tracking-wider uppercase text-white hover:text-red-500 transition py-2"
+                                >
+                                    Katalog
+                                </Link>
+                            </nav>
+                            <div className="pt-4 border-t border-white/5 flex flex-col space-y-3">
+                                {auth?.user ? (
+                                    <>
+                                        <Link 
+                                            href="/admin/motor" 
+                                            className="bg-[#dc2626] text-white text-xs font-bold uppercase tracking-wider px-6 py-3 rounded-sm italic hover:bg-red-700 transition duration-300 text-center"
+                                        >
+                                            ADMIN PANEL
+                                        </Link>
+                                        <Link
+                                            href={route('logout')}
+                                            method="post"
+                                            as="button"
+                                            className="text-gray-400 hover:text-white text-xs font-semibold tracking-wider transition py-2 text-center"
+                                        >
+                                            KELUAR
+                                        </Link>
+                                    </>
+                                ) : (
+                                    <Link 
+                                        href={route('login')} 
+                                        className="bg-[#dc2626] text-white text-xs font-bold uppercase tracking-wider px-6 py-3 rounded-sm italic hover:bg-red-700 transition duration-300 text-center"
+                                    >
+                                        MASUK ADMIN
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </header>
 
                 {/* Main Body */}
@@ -204,13 +269,20 @@ export default function KatalogMotor({ auth, motorcycles }) {
                                 return (
                                     <div 
                                         key={motor.id}
-                                        className="col-span-1 md:col-span-2 relative bg-cover bg-center border border-white/5 group hover:border-white/10 transition duration-300 min-h-[350px] flex flex-col justify-between p-8 overflow-hidden"
-                                        style={{ 
-                                            backgroundImage: `linear-gradient(to right, rgba(10, 11, 13, 0.95) 45%, rgba(10, 11, 13, 0.4) 80%), url('${imageSrc}')` 
-                                        }}
+                                        className="col-span-1 md:col-span-2 relative border border-white/5 group hover:border-white/10 transition duration-300 min-h-[350px] flex flex-col justify-between p-8 overflow-hidden"
                                     >
+                                        {/* Background Image */}
+                                        <img 
+                                            src={imageSrc} 
+                                            alt={motor.nama} 
+                                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500 z-0" 
+                                        />
+
+                                        {/* Responsive Gradient Overlay */}
+                                        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0b0d]/95 via-[#0a0b0d]/80 to-[#0a0b0d]/40 md:bg-gradient-to-r md:from-[#0a0b0d]/95 md:via-[#0a0b0d]/70 md:to-transparent z-0" />
+
                                         {/* Top Badges */}
-                                        <div className="flex space-x-2">
+                                        <div className="relative z-10 flex space-x-2">
                                             <span className="bg-[#dc2626] text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1">
                                                 TERSEDIA
                                             </span>
@@ -220,7 +292,7 @@ export default function KatalogMotor({ auth, motorcycles }) {
                                         </div>
 
                                         {/* Center Info */}
-                                        <div className="mt-auto">
+                                        <div className="relative z-10 mt-auto">
                                             <h2 className="text-3xl font-black italic uppercase tracking-tight text-white group-hover:text-red-500 transition duration-300 mb-4">
                                                 {motor.nama}
                                             </h2>
@@ -250,7 +322,7 @@ export default function KatalogMotor({ auth, motorcycles }) {
                                         </div>
 
                                         {/* Bottom Price & Button */}
-                                        <div className="flex justify-between items-end mt-6">
+                                        <div className="relative z-10 flex justify-between items-end mt-6">
                                             <span className="text-2xl font-black text-[#dc2626]">
                                                 {formattedPrice}
                                             </span>
