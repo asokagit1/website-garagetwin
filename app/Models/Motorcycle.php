@@ -8,12 +8,11 @@ class Motorcycle extends Model
 {
     protected $fillable = [
         'nama',
-        'merek',
+        'brand_id',
         'kategori',
         'harga',
         'tahun',
         'kilometer',
-        'kondisi',
         'status',
         'deskripsi',
         'foto',
@@ -24,4 +23,9 @@ class Motorcycle extends Model
         'harga' => 'integer',
         'kilometer' => 'integer',
     ];
+
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class);
+    }
 }

@@ -11,13 +11,12 @@ return new class extends Migration
         Schema::create('motorcycles', function (Blueprint $table) {
             $table->id();
             $table->string('nama');
-            $table->string('merek');
-            $table->enum('kategori', ['matic', 'manual']);
+            $table->foreignId('brand_id')->constrained()->cascadeOnDelete();
+            $table->enum('kategori', ['matik', 'manual']);
             $table->bigInteger('harga');
-            $table->year('tahun');
+            $table->integer('tahun');
             $table->integer('kilometer');
-            $table->enum('kondisi', ['bekas', 'baru']);
-            $table->enum('status', ['terjual', 'tersedia'])->default('tersedia');
+            $table->enum('status', ['terjual', 'tersedia']);
             $table->text('deskripsi');
             $table->json('foto')->nullable();
             $table->timestamps();
