@@ -14,6 +14,7 @@ class UserSeeder extends Seeder
             'name' => 'Admin',
             'email' => 'admin@garagetwin.com',
             'password' => Hash::make('password123'),
+            'role' => 'admin'
         ]);
     }
 }
