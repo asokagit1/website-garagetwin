@@ -1,12 +1,23 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import DetailMotor from '@/Components/DetailMotor';
 
-export default function KatalogMotor({ auth, motorcycles }) {
+export default function KatalogMotor({
+    auth,
+    motorcycles,
+    brands,
+    isAdmin = false
+    }) {
     const [sortBy, setSortBy] = useState('Terbaru');
     const [selectedMotor, setSelectedMotor] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingMotor, setEditingMotor] = useState(null);
+    const [photoError, setPhotoError] = useState('');
 
     // Default mock data to guarantee the page displays correctly if database is empty
     const defaultMotorcycles = [
@@ -71,7 +82,173 @@ export default function KatalogMotor({ auth, motorcycles }) {
             is_new: true, // Used for the "Baru Masuk" badge
         }
     ];
+        const [formData, setFormData] = useState({
+        nama: '',
+        brand_id: '',
+        kategori: '',
+        harga: '',
+        tahun: '',
+        kilometer: '',
+        status: 'tersedia',
+        deskripsi: '',
+        foto: [],
+    });
 
+        const handleInputChange = (e) => {
+        const { name, value } = e.target;
+
+        setFormData({
+            ...formData,
+            [name]: value,
+        });
+    };
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+
+        const oversizedFile = files.find(
+            (file) => file.size > 2048 * 1024
+        );
+
+        if (oversizedFile) {
+            setPhotoError(
+                `Foto "${oversizedFile.name}" berukuran ${(oversizedFile.size / 1024 / 1024).toFixed(2)} MB. Maksimal ukuran foto adalah 2 MB.`
+            );
+
+            e.target.value = '';
+            return;
+        }
+
+        setPhotoError('');
+
+        setFormData({
+            ...formData,
+            foto: files,
+        });
+    };
+        const handleEditClick = (motor) => {
+                setEditingMotor(motor);
+
+                setFormData({
+                    nama: motor.nama || '',
+                    brand_id: motor.brand_id || '',
+                    kategori: motor.kategori || '',
+                    harga: motor.harga || '',
+                    tahun: motor.tahun || '',
+                    kilometer: motor.kilometer || '',
+                    status: motor.status || 'tersedia',
+                    deskripsi: motor.deskripsi || '',
+                    foto: [],
+                });
+
+                setIsEditModalOpen(true);
+            };
+
+            const handleDelete = (motor) => {
+                const confirmed = window.confirm(
+                    `Apakah kamu yakin ingin menghapus motor "${motor.nama}"?`
+                );
+
+                if (!confirmed) {
+                    return;
+                }
+
+                router.delete(`/admin/motor/${motor.id}`, {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        console.log('Motor berhasil dihapus');
+                    },
+                    onError: (errors) => {
+                        console.error('Gagal menghapus motor:', errors);
+                    },
+                });
+            };
+                const handleSubmit = (e) => {
+                    e.preventDefault();
+
+                    const data = new FormData();
+
+                    data.append('nama', formData.nama);
+                    data.append('brand_id', formData.brand_id);
+                    data.append('kategori', formData.kategori);
+                    data.append('harga', formData.harga);
+                    data.append('tahun', formData.tahun);
+                    data.append('kilometer', formData.kilometer);
+                    data.append('status', formData.status);
+                    data.append('deskripsi', formData.deskripsi);
+
+                    for (let i = 0; i < formData.foto.length; i++) {
+                        data.append('foto[]', formData.foto[i]);
+                    }
+
+                    router.post('/admin/motor', data, {
+                        forceFormData: true,
+                        onSuccess: () => {
+                            setIsAddModalOpen(false);
+
+                            setFormData({
+                                nama: '',
+                                brand_id: '',
+                                kategori: '',
+                                harga: '',
+                                tahun: '',
+                                kilometer: '',
+                                status: 'tersedia',
+                                deskripsi: '',
+                                foto: [],
+                            });
+                        },
+                        onError: (errors) => {
+                            console.error('Gagal menambahkan motor:', errors);
+
+                            Object.entries(errors).forEach(([field, message]) => {
+                                console.error(`${field}:`, message);
+                            });
+                        },
+                    });
+                };
+
+        const handleUpdate = (e) => {
+        e.preventDefault();
+
+        if (!editingMotor) return;
+
+        const data = new FormData();
+
+        data.append('nama', formData.nama);
+        data.append('brand_id', formData.brand_id);
+        data.append('kategori', formData.kategori);
+        data.append('harga', formData.harga);
+        data.append('tahun', formData.tahun);
+        data.append('kilometer', formData.kilometer);
+        data.append('status', formData.status);
+        data.append('deskripsi', formData.deskripsi);
+
+        for (let i = 0; i < formData.foto.length; i++) {
+            data.append('foto[]', formData.foto[i]);
+        }
+
+        data.append('_method', 'PUT');
+
+        router.post(`/admin/motor/${editingMotor.id}`, data, {
+            forceFormData: true,
+            onSuccess: () => {
+                setIsEditModalOpen(false);
+                setEditingMotor(null);
+
+                setFormData({
+                    nama: '',
+                    brand_id: '',
+                    kategori: '',
+                    harga: '',
+                    tahun: '',
+                    kilometer: '',
+                    status: 'tersedia',
+                    deskripsi: '',
+                    foto: [],
+                });
+            },
+        });
+    };
     // Combine or fallback to default data
     const allMotorcycles = motorcycles && motorcycles.length > 0 
         ? motorcycles.map((motor, idx) => ({
@@ -103,13 +280,13 @@ export default function KatalogMotor({ auth, motorcycles }) {
                         {/* Navigation Links (hidden on mobile) */}
                         <nav className="hidden md:flex items-center space-x-8 text-sm font-medium">
                             <Link 
-                                href="/" 
+                                href={isAdmin ? "/admin/dashboard" : "/"}
                                 className="py-2 text-gray-400 hover:text-white transition duration-300"
                             >
                                 Beranda
                             </Link>
                             <Link 
-                                href="/katalog" 
+                                href={isAdmin ? "/admin/katalog" : "/katalog"}
                                 className="relative py-2 text-white hover:text-white/85 transition group"
                             >
                                 Katalog
@@ -169,13 +346,13 @@ export default function KatalogMotor({ auth, motorcycles }) {
                         <div className="md:hidden border-t border-white/5 bg-[#0a0b0d]/95 backdrop-blur-md px-6 py-4 space-y-4">
                             <nav className="flex flex-col space-y-3">
                                 <Link 
-                                    href="/" 
+                                    href={isAdmin ? "/admin/dashboard" : "/"}
                                     className="text-sm font-bold tracking-wider uppercase text-gray-400 hover:text-white transition py-2"
                                 >
                                     Beranda
                                 </Link>
                                 <Link 
-                                    href="/katalog" 
+                                    href={isAdmin ? "/admin/katalog" : "/katalog"}
                                     className="text-sm font-bold tracking-wider uppercase text-white hover:text-red-500 transition py-2"
                                 >
                                     Katalog
@@ -225,6 +402,245 @@ export default function KatalogMotor({ auth, motorcycles }) {
                                 Jelajahi koleksi motor bekas berkualitas tinggi kami yang telah melalui inspeksi ketat.
                             </p>
                         </div>
+                        {isAdmin && (
+                            <button
+                                onClick={() => setIsAddModalOpen(true)}
+                                className="bg-[#dc2626] hover:bg-red-700 text-white px-5 py-3 text-xs font-bold uppercase tracking-wider transition"
+                            >
+                                + Tambah Motor
+                            </button>
+                        )}
+
+                        {isAdmin && isAddModalOpen && (
+                            <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+
+                                <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-[#111318] border border-white/10 shadow-2xl">
+
+                                    {/* HEADER */}
+                                    <div className="sticky top-0 z-10 flex items-center justify-between bg-[#111318] border-b border-white/10 px-6 py-5">
+
+                                        <div>
+                                            <h2 className="text-xl font-black uppercase italic text-white">
+                                                Tambah Motor
+                                            </h2>
+
+                                            <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">
+                                                Tambahkan unit motor baru
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            onClick={() => setIsAddModalOpen(false)}
+                                            className="text-gray-400 hover:text-white text-2xl"
+                                        >
+                                            ×
+                                        </button>
+
+                                    </div>
+
+                                    {/* FORM */}
+                                    <form onSubmit={handleSubmit} className="p-6 space-y-6">
+
+                                        {/* NAMA */}
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                Nama Motor
+                                            </label>
+
+                                            <input
+                                                type="text"
+                                                name="nama"
+                                                value={formData.nama}
+                                                onChange={handleInputChange}
+                                                placeholder="Contoh: Kawasaki KLX 150"
+                                                required
+                                                className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none"
+                                            />
+                                        </div>
+
+                                        {/* BRAND + KATEGORI */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                    Brand
+                                                </label>
+
+                                                <select
+                                                    name="brand_id"
+                                                    value={formData.brand_id}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                    className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none"
+                                                >
+                                                    <option value="">Pilih Brand</option>
+
+                                                    {brands?.map((brand) => (
+                                                        <option key={brand.id} value={brand.id}>
+                                                            {brand.nama}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                    Kategori
+                                                </label>
+
+                                                <select
+                                                    name="kategori"
+                                                    value={formData.kategori}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                    className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none"
+                                                >
+                                                    <option value="">Pilih Kategori</option>
+                                                    <option value="matik">Matik</option>
+                                                    <option value="manual">Manual</option>
+                                                </select>
+                                            </div>
+
+                                        </div>
+
+                                        {/* HARGA + TAHUN */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                    Harga
+                                                </label>
+
+                                                <input
+                                                    type="number"
+                                                    name="harga"
+                                                    value={formData.harga}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Contoh: 25000000"
+                                                    required
+                                                    className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                    Tahun
+                                                </label>
+
+                                                <input
+                                                    type="number"
+                                                    name="tahun"
+                                                    value={formData.tahun}
+                                                    onChange={handleInputChange}
+                                                    placeholder="2024"
+                                                    required
+                                                    className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none"
+                                                />
+                                            </div>
+
+                                        </div>
+
+                                        {/* KM + STATUS */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                    Kilometer
+                                                </label>
+
+                                                <input
+                                                    type="number"
+                                                    name="kilometer"
+                                                    value={formData.kilometer}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Contoh: 12000"
+                                                    required
+                                                    className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                    Status
+                                                </label>
+
+                                                <select
+                                                    name="status"
+                                                    value={formData.status}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                    className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none"
+                                                >
+                                                    <option value="tersedia">Tersedia</option>
+                                                    <option value="terjual">Terjual</option>
+                                                </select>
+                                            </div>
+
+                                        </div>
+
+                                        {/* DESKRIPSI */}
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                Deskripsi
+                                            </label>
+
+                                            <textarea
+                                                name="deskripsi"
+                                                value={formData.deskripsi}
+                                                onChange={handleInputChange}
+                                                rows="5"
+                                                placeholder="Deskripsi motor..."
+                                                required
+                                                className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none resize-none"
+                                            />
+                                        </div>
+
+                                        {/* FOTO */}
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                Foto Motor
+                                            </label>
+
+                                            <input
+                                                type="file"
+                                                name="foto"
+                                                accept="image/jpeg,image/png,image/jpg"
+                                                multiple
+                                                onChange={handleFileChange}
+                                                className="w-full bg-[#0a0b0d] border border-white/10 text-gray-400 px-4 py-3 text-sm"
+                                            />
+
+                                            <p className="text-[10px] text-gray-600 mt-2">
+                                                Maksimal 2MB per foto. Format JPG, JPEG, PNG.
+                                            </p>
+                                        </div>
+
+                                        {/* BUTTON */}
+                                        <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsAddModalOpen(false)}
+                                                className="border border-white/10 text-gray-400 hover:text-white hover:border-white/30 px-6 py-3 text-xs font-bold uppercase tracking-wider transition"
+                                            >
+                                                Batal
+                                            </button>
+
+                                            <button
+                                                type="submit"
+                                                className="bg-[#dc2626] hover:bg-red-700 text-white px-6 py-3 text-xs font-bold uppercase tracking-wider transition"
+                                            >
+                                                Simpan Motor
+                                            </button>
+
+                                        </div>
+
+                                    </form>
+
+                                </div>
+
+                            </div>
+                        )}
 
                         {/* Sorting dropdown */}
                         <div className="flex items-center space-x-3 self-start md:self-auto">
@@ -248,6 +664,230 @@ export default function KatalogMotor({ auth, motorcycles }) {
                             </div>
                         </div>
                     </div>
+
+                    {isAdmin && isEditModalOpen && (
+                        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+
+                            <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-[#111318] border border-white/10 shadow-2xl">
+
+                                <div className="sticky top-0 z-10 flex items-center justify-between bg-[#111318] border-b border-white/10 px-6 py-5">
+
+                                    <div>
+                                        <h2 className="text-xl font-black uppercase italic text-white">
+                                            Update Motor
+                                        </h2>
+
+                                        <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">
+                                            Perbarui informasi unit motor
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsEditModalOpen(false);
+                                            setEditingMotor(null);
+                                        }}
+                                        className="text-gray-400 hover:text-white text-2xl"
+                                    >
+                                        ×
+                                    </button>
+
+                                </div>
+
+                                <form onSubmit={handleUpdate} className="p-6 space-y-6">
+
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                            Nama Motor
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            name="nama"
+                                            value={formData.nama}
+                                            onChange={handleInputChange}
+                                            required
+                                            className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                Brand
+                                            </label>
+
+                                            <select
+                                                name="brand_id"
+                                                value={formData.brand_id}
+                                                onChange={handleInputChange}
+                                                required
+                                                className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none"
+                                            >
+                                                <option value="">Pilih Brand</option>
+
+                                                {brands?.map((brand) => (
+                                                    <option key={brand.id} value={brand.id}>
+                                                        {brand.nama}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                Kategori
+                                            </label>
+
+                                            <select
+                                                name="kategori"
+                                                value={formData.kategori}
+                                                onChange={handleInputChange}
+                                                required
+                                                className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none"
+                                            >
+                                                <option value="">Pilih Kategori</option>
+                                                <option value="matik">Matik</option>
+                                                <option value="manual">Manual</option>
+                                            </select>
+                                        </div>
+
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                Harga
+                                            </label>
+
+                                            <input
+                                                type="number"
+                                                name="harga"
+                                                value={formData.harga}
+                                                onChange={handleInputChange}
+                                                required
+                                                className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                Tahun
+                                            </label>
+
+                                            <input
+                                                type="number"
+                                                name="tahun"
+                                                value={formData.tahun}
+                                                onChange={handleInputChange}
+                                                required
+                                                className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none"
+                                            />
+                                        </div>
+
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                Kilometer
+                                            </label>
+
+                                            <input
+                                                type="number"
+                                                name="kilometer"
+                                                value={formData.kilometer}
+                                                onChange={handleInputChange}
+                                                required
+                                                className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                                Status
+                                            </label>
+
+                                            <select
+                                                name="status"
+                                                value={formData.status}
+                                                onChange={handleInputChange}
+                                                required
+                                                className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none"
+                                            >
+                                                <option value="tersedia">Tersedia</option>
+                                                <option value="terjual">Terjual</option>
+                                            </select>
+                                        </div>
+
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                            Deskripsi
+                                        </label>
+
+                                        <textarea
+                                            name="deskripsi"
+                                            value={formData.deskripsi}
+                                            onChange={handleInputChange}
+                                            rows="5"
+                                            required
+                                            className="w-full bg-[#0a0b0d] border border-white/10 text-white px-4 py-3 text-sm focus:border-red-600 focus:outline-none resize-none"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                            Ganti Foto
+                                        </label>
+
+                                        <input
+                                            type="file"
+                                            name="foto"
+                                            accept="image/jpeg,image/png,image/jpg"
+                                            multiple
+                                            onChange={handleFileChange}
+                                            className="w-full bg-[#0a0b0d] border border-white/10 text-gray-400 px-4 py-3 text-sm"
+                                        />
+
+                                        <p className="text-[10px] text-gray-600 mt-2">
+                                            Kosongkan jika tidak ingin mengganti foto.
+                                        </p>
+                                    </div>
+
+                                    <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setIsEditModalOpen(false);
+                                                setEditingMotor(null);
+                                            }}
+                                            className="border border-white/10 text-gray-400 hover:text-white hover:border-white/30 px-6 py-3 text-xs font-bold uppercase tracking-wider transition"
+                                        >
+                                            Batal
+                                        </button>
+
+                                        <button
+                                            type="submit"
+                                            className="bg-[#dc2626] hover:bg-red-700 text-white px-6 py-3 text-xs font-bold uppercase tracking-wider transition"
+                                        >
+                                            Simpan Perubahan
+                                        </button>
+
+                                    </div>
+
+                                </form>
+
+                            </div>
+
+                        </div>
+                    )}
 
                     {/* Catalog Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -326,12 +966,39 @@ export default function KatalogMotor({ auth, motorcycles }) {
                                             <span className="text-2xl font-black text-[#dc2626]">
                                                 {formattedPrice}
                                             </span>
-                                            <button 
-                                                onClick={() => { setSelectedMotor(motor); setIsModalOpen(true); }}
-                                                className="border border-white hover:bg-white hover:text-black text-white text-xs font-bold uppercase tracking-wider px-6 py-2.5 transition duration-300 cursor-pointer"
-                                            >
-                                                DETAIL
-                                            </button>
+
+                                            {isAdmin ? (
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleEditClick(motor)}
+                                                        className="border border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 transition duration-300"
+                                                    >
+                                                        UPDATE
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDelete(motor);
+                                                        }}
+                                                        className="border border-red-500 text-red-500 hover:bg-red-500 hover:text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 transition duration-300"
+                                                    >
+                                                        DELETE
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => {
+                                                        setSelectedMotor(motor);
+                                                        setIsModalOpen(true);
+                                                    }}
+                                                    className="border border-white hover:bg-white hover:text-black text-white text-xs font-bold uppercase tracking-wider px-6 py-2.5 transition duration-300 cursor-pointer"
+                                                >
+                                                    DETAIL
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -377,18 +1044,57 @@ export default function KatalogMotor({ auth, motorcycles }) {
 
                                             {/* Bottom Price & Link */}
                                             <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/5">
-                                                <span className="text-base font-bold text-gray-300">
-                                                    {formattedPrice}
-                                                </span>
-                                                <button 
-                                                    onClick={() => { setSelectedMotor(motor); setIsModalOpen(true); }}
-                                                    className="text-white group-hover:text-[#dc2626] transition duration-300 transform group-hover:translate-x-1 cursor-pointer"
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                                                    </svg>
-                                                </button>
+                                            <span className="text-base font-bold text-gray-300">
+                                                {formattedPrice}
+                                            </span>
+
+                                            <div className="flex items-center gap-3">
+                                                {isAdmin && (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleEditClick(motor)}
+                                                        className="text-xs font-bold uppercase tracking-wider text-blue-400 hover:text-blue-300 transition"
+                                                    >
+                                                        UPDATE
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleDelete(motor)}
+                                                        className="text-xs font-bold uppercase tracking-wider text-red-500 hover:text-red-400 transition"
+                                                    >
+                                                        DELETE
+                                                    </button>
+                                                </>
+                                            )}
+
+                                                {!isAdmin && (
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedMotor(motor);
+                                                            setIsModalOpen(true);
+                                                        }}
+                                                        className="text-white group-hover:text-[#dc2626] transition duration-300 transform group-hover:translate-x-1 cursor-pointer"
+                                                    >
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            fill="none"
+                                                            viewBox="0 0 24 24"
+                                                            strokeWidth="2.5"
+                                                            stroke="currentColor"
+                                                            className="w-5 h-5"
+                                                        >
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                                                            />
+                                                        </svg>
+                                                    </button>
+                                                )}
                                             </div>
+                                        </div>
                                         </div>
                                     </div>
                                 );

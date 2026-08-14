@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import DetailMotor from '@/Components/DetailMotor';
 
-export default function Dashboard({ auth, motorcycles }) {
+export default function Dashboard({ auth, motorcycles, brands, isAdmin = false }) {
     const [selectedMotor, setSelectedMotor] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -86,7 +86,7 @@ export default function Dashboard({ auth, motorcycles }) {
                                     <span className="absolute bottom-0 left-0 w-full h-[2px] bg-red-600"></span>
                                 </Link>
                                 <Link
-                                    href="/katalog"
+                                     href={isAdmin ? "/admin/katalog" : "/katalog"}
                                     className="py-2 text-gray-400 hover:text-white transition duration-300"
                                 >
                                     Katalog
@@ -151,7 +151,7 @@ export default function Dashboard({ auth, motorcycles }) {
                                         Beranda
                                     </Link>
                                     <Link
-                                        href="/katalog"
+                                        href={isAdmin ? "/admin/katalog" : "/katalog"}
                                         className="text-sm font-bold tracking-wider uppercase text-gray-400 hover:text-white transition py-2"
                                     >
                                         Katalog
@@ -200,7 +200,7 @@ export default function Dashboard({ auth, motorcycles }) {
                             </p>
                             <div className="mt-10">
                                 <Link
-                                    href="/katalog"
+                                     href={isAdmin ? "/admin/katalog" : "/katalog"}    
                                     className="bg-[#dc2626] hover:bg-red-700 text-white font-bold uppercase tracking-wider text-sm px-8 py-4 rounded-sm inline-flex items-center space-x-3 transition duration-300 transform hover:scale-[1.02]"
                                 >
                                     <span>JELAJAHI KATALOG</span>
@@ -270,7 +270,7 @@ export default function Dashboard({ auth, motorcycles }) {
                                 MOTOR <span className="text-[#dc2626]">TERBARU</span>
                             </h2>
                             <Link
-                                href="/katalog"
+                                href={isAdmin ? "/admin/katalog" : "/katalog"}
                                 className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition flex items-center space-x-2"
                             >
                                 <span>LIHAT SEMUA</span>

@@ -11,8 +11,11 @@ return new class extends Migration
         Schema::create('motorcycles', function (Blueprint $table) {
             $table->id();
             $table->string('nama');
-            $table->foreignId('brand_id')->constrained()->cascadeOnDelete();
-            $table->enum('kategori', ['matik', 'manual']);
+            $table->foreignId('brand_id')->constrained('brands')->cascadeOnDelete();
+            $table->enum('kategori', [
+                'matik',
+                'manual'
+            ]);
             $table->bigInteger('harga');
             $table->integer('tahun');
             $table->integer('kilometer');

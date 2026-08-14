@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Brand;
 
 class Motorcycle extends Model
 {
@@ -24,7 +26,7 @@ class Motorcycle extends Model
         'kilometer' => 'integer',
     ];
 
-    public function brand()
+    public function brand(): BelongsTo
     {
         return $this->belongsTo(Brand::class);
     }

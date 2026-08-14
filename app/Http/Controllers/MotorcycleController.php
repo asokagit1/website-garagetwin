@@ -54,7 +54,7 @@ class MotorcycleController extends Controller
 
         Motorcycle::create($validated);
 
-        return redirect('/admin/motor')->with('success', 'Data motor berhasil ditambahkan.');
+        return redirect('/admin/katalog')->with('success', 'Data motor berhasil ditambahkan.');
     }
 
     public function show(Motorcycle $motorcycle)
@@ -106,7 +106,7 @@ class MotorcycleController extends Controller
 
         $motorcycle->update($validated);
 
-        return redirect('/admin/motor')->with('success', 'Data motor berhasil diperbarui.');
+        return redirect('/admin/katalog')->with('success', 'Data motor berhasil diperbarui.');
     }
 
     public function destroy(Motorcycle $motorcycle)
@@ -119,6 +119,6 @@ class MotorcycleController extends Controller
         
         $motorcycle->delete();
 
-        return redirect('/admin/motor')->with('success', 'Data motor berhasil dihapus.');
+        return redirect('/admin/katalog')->with('success', 'Data motor berhasil dihapus.');
     }
 }
