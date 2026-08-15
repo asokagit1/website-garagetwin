@@ -13,9 +13,11 @@ class MotorcycleController extends Controller
     public function index()
     {
         $motorcycles = Motorcycle::with('brand')->latest()->get();
+        $brands = Brand::all();
         
         return Inertia::render('Admin/Motor/Index', [
-            'motorcycles' => $motorcycles
+            'motorcycles' => $motorcycles,
+            'brands' => $brands,
         ]);
     }
 
