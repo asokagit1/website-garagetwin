@@ -21,13 +21,6 @@ Route::get('/katalog', function () {
 })->name('katalog');
 Route::get('/motor/{motorcycle}', [MotorcycleController::class, 'show']);
 
-Route::get('/dashboard', function () {
-    $motorcycles = App\Models\Motorcycle::with('brand')->latest()->take(3)->get();
-    return Inertia::render('Dashboard', [
-        'motorcycles' => $motorcycles
-    ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
