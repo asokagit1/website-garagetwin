@@ -8,11 +8,15 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
+    if (auth()->check() && auth()->user()->role === 'admin') {
+        return redirect('/admin/motor');
+    }
+
     $motorcycles = App\Models\Motorcycle::with('brand')->latest()->take(3)->get();
     return Inertia::render('Dashboard', [
         'motorcycles' => $motorcycles
     ]);
-});
+})->name('dashboard');
 Route::get('/katalog', function () {
     $motorcycles = App\Models\Motorcycle::with('brand')->latest()->get();
     return Inertia::render('KatalogMotor', [
@@ -25,7 +29,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
+Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/motor', [MotorcycleController::class, 'index']);
     Route::get('/admin/motor/create', [MotorcycleController::class, 'create']);
     Route::post('/admin/motor', [MotorcycleController::class, 'store']);
