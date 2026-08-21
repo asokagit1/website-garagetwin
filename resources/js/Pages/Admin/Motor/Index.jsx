@@ -10,6 +10,8 @@ export default function Index({ motorcycles = [], brands = [] }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState('create');
     const [editingMotor, setEditingMotor] = useState(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [motorToDelete, setMotorToDelete] = useState(null);
 
     const handleLogout = () => {
     router.post('/logout');
@@ -47,22 +49,20 @@ export default function Index({ motorcycles = [], brands = [] }) {
         setIsModalOpen(true);
     };
 
-        const handleDelete = (motor) => {
-        const confirmed = window.confirm(
-            `Apakah kamu yakin ingin menghapus motor "${motor.nama}"?`
-        );
+    const handleDeleteClick = (motor) => {
+        setMotorToDelete(motor);
+        setIsDeleteModalOpen(true);
+    };
 
-        if (!confirmed) {
-            return;
-        }
+    const confirmDelete = () => {
+        if (!motorToDelete) return;
 
-        router.delete(`/admin/motor/${motor.id}`, {
+        router.delete(`/admin/motor/${motorToDelete.id}`, {
             preserveScroll: true,
-
             onSuccess: () => {
-                console.log('Motor berhasil dihapus');
+                setIsDeleteModalOpen(false);
+                setMotorToDelete(null);
             },
-
             onError: (errors) => {
                 console.error('Gagal menghapus motor:', errors);
             },
@@ -260,9 +260,20 @@ export default function Index({ motorcycles = [], brands = [] }) {
                             {/* Search */}
                             <div className="relative flex items-center">
 
-                                <span className="absolute left-3 text-[#717786] text-sm">
-                                    🔍
-                                </span>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth="2"
+                                    stroke="currentColor"
+                                    className="absolute left-3 h-4 w-4 text-[#717786]"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                                    />
+                                </svg>
 
                                 <input
                                     type="text"
@@ -413,7 +424,7 @@ export default function Index({ motorcycles = [], brands = [] }) {
 
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleDelete(motor)}
+                                                        onClick={() => handleDeleteClick(motor)}
                                                         className="bg-transparent border-none cursor-pointer text-sm text-[#717786] hover:text-[#e62e45] transition"
                                                         title="Delete"
                                                     >
@@ -875,6 +886,60 @@ export default function Index({ motorcycles = [], brands = [] }) {
 
                         </form>
 
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Konfirmasi Hapus Motor */}
+            {isDeleteModalOpen && (
+                <div
+                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 p-4"
+                    onMouseDown={(e) => {
+                        if (e.target === e.currentTarget) {
+                            setIsDeleteModalOpen(false);
+                            setMotorToDelete(null);
+                        }
+                    }}
+                >
+                    <div className="w-full max-w-[440px] rounded-lg border border-[#282c35] bg-[#16181d] p-6 text-[#e1e1e1] shadow-2xl animate-in fade-in zoom-in duration-200">
+                        {/* Icon & Title */}
+                        <div className="flex flex-col items-center text-center">
+                            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 text-red-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="h-7 w-7">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            
+                            <h3 className="text-lg font-bold text-white mb-2">
+                                Hapus Data Motor?
+                            </h3>
+                            
+                            <p className="text-sm text-[#8c93a0] leading-relaxed mb-6">
+                                Apakah Anda yakin ingin menghapus motor <span className="font-semibold text-white">"{motorToDelete?.nama}"</span>? Tindakan ini bersifat permanen dan tidak dapat dibatalkan.
+                            </p>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsDeleteModalOpen(false);
+                                    setMotorToDelete(null);
+                                }}
+                                className="flex-1 rounded-md border border-[#2a2e37] bg-[#1a1d24] py-2.5 text-sm font-semibold text-[#8c93a0] transition hover:border-[#3a3f4b] hover:text-white"
+                            >
+                                Batal
+                            </button>
+                            
+                            <button
+                                type="button"
+                                onClick={confirmDelete}
+                                className="flex-1 rounded-md bg-[#e62e45] py-2.5 text-sm font-semibold text-white transition hover:bg-[#c82338] shadow-lg shadow-red-950/20"
+                            >
+                                Hapus
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

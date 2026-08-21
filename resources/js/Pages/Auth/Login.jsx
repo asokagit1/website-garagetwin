@@ -24,7 +24,18 @@ export default function Login({ status }) {
 
             <div className="min-h-screen w-full bg-black text-white flex items-center justify-center p-4">
 
-                <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 overflow-hidden rounded-xl border border-[#1f2229] bg-[#0b0e14] shadow-2xl">
+                <div className="relative w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 overflow-hidden rounded-xl border border-[#1f2229] bg-[#0b0e14] shadow-2xl">
+
+                    {/* Close Button */}
+                    <Link
+                        href="/"
+                        className="absolute top-4 right-4 z-50 flex items-center justify-center w-8 h-8 rounded-full border border-zinc-800/80 bg-[#12161f]/80 backdrop-blur-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+                        aria-label="Kembali ke Beranda"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </Link>
 
                     {/* LEFT SIDE */}
                     <div
